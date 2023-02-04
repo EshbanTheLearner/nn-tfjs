@@ -20,7 +20,7 @@ async function run(){
         console.log(`   > running socket on port: ${port}`);
     });
 
-    io.onconnection("connection", (socket) => {
+    io.on("connection", (socket) => {
         socket.on("predictSample", async(sample) => {
             io.emit("predictResult", await pitch_type.predictSample(sample));
         });

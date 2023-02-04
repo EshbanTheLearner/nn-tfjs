@@ -1,10 +1,10 @@
 const tf = require("@tensorflow/tfjs");
 
-function normalize(value, max, min){
-    if (min === undefined || max == undefined){
+function normalize(value, min, max){
+    if (min === undefined || max === undefined){
         return value;
     }
-    return(value - min) / (max-min);
+    return(value - min) / (max - min);
 }
 
 const TRAIN_DATA_PATH = "./";
@@ -85,6 +85,7 @@ async function evaluate(useTestData) {
     let results = {};
     await trainingValidationData.forEachAsync(pitchTypeBatch => {
         const values = model.predict(pitchTypeBatch.xs).dataSync();
+        const classSize = TRAINING_DATA_LENGTH / NUM_PITCH_CLASSES;
         for (let i=0; i<NUM_PITCH_CLASSES; i++){
             results[pitchFromClassNum(i)] = {
                 training: calcPitchClassEval(i, classSize, values)
@@ -142,7 +143,7 @@ function pitchFromClassNum(classNum){
             return "Changeup";
         case 6:
             return "Curveball";
-        case 7:
+        default:
             return "Unknown";
     }
 }
