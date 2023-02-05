@@ -4,11 +4,11 @@ function normalize(value, min, max){
     if (min === undefined || max === undefined){
         return value;
     }
-    return(value - min) / (max - min);
+    return (value - min) / (max - min);
 }
 
-const TRAIN_DATA_PATH = "./";
-const TEST_DATA_PATH = "./";
+const TRAIN_DATA_PATH = "pitch_type_training_data.csv";
+const TEST_DATA_PATH = "pitch_type_test_data.csv";
 
 const VX0_MIN = -18.885;
 const VX0_MAX = 18.065;
@@ -33,52 +33,60 @@ const csvTransform = ({xs, ys}) => {
     const values = [
         normalize(xs.vx0, VX0_MIN, VX0_MAX),
         normalize(xs.vy0, VY0_MIN, VY0_MAX),
-        normalize(xs.vz0, VZ0_MIN, VZ0_MAX),
-        normalize(xs.ax, AX_MIN, AX_MAX),
-        normalize(xs.ay, AY_MIN, AY_MAX),
+        normalize(xs.vz0, VZ0_MIN, VZ0_MAX), normalize(xs.ax, AX_MIN, AX_MAX),
+        normalize(xs.ay, AY_MIN, AY_MAX), normalize(xs.az, AZ_MIN, AZ_MAX),
         normalize(xs.start_speed, START_SPEED_MIN, START_SPEED_MAX),
         xs.left_handed_pitcher
     ];
-    return {
-        xs: values,
-        ys: ys.pitch_code
-    };
+    return {xs: values, ys: ys.pitch_code};
 }
 
-const trainingData = tf.data.csv(TRAIN_DATA_PATH, {
-    columnConfigs: {
-        pitch_code: {
-            isLabel: true
+const trainingData =
+    tf.data.csv(TRAIN_DATA_PATH, {
+        columnConfigs: {
+            pitch_code: {
+                isLabel: true
+            }
         }
-    }
-}).map(csvTransform).shuffle(TRAINING_DATA_LENGTH).batch(100);
+    })
+    .map(csvTransform)
+    .shuffle(TRAINING_DATA_LENGTH)
+    .batch(100);
 
-const trainingValidationData = tf.data.csv(TRAIN_DATA_PATH, {
-    columnConfigs: {
-        pitch_code: {
-            isLabel: true
+const trainingValidationData =
+    tf.data.csv(TRAIN_DATA_PATH, {
+        columnConfigs: {
+            pitch_code: {
+                isLabel: true
+            }
         }
-    }
-}).map(csvTransform).batch(TRAINING_DATA_LENGTH);
+    })
+    .map(csvTransform)
+    .batch(TRAINING_DATA_LENGTH);
 
-const testValidationData = tf.data.csv(TEST_DATA_PATH, {
-    columnConfigs: {
-        pitch_code: {
-            isLabel: true
+const testValidationData =
+    tf.data.csv(TEST_DATA_PATH, {
+        columnConfigs: {
+            pitch_code: {
+                isLabel: true
+            }
         }
-    }
-}).map(csvTransform).batch(TEST_DATA_LENGTH);
+    })
+    .map(csvTransform)
+    .batch(TEST_DATA_LENGTH);
+
+
 
 const model = tf.sequential();
-model.add(tf.layers.dense({units: 250, activation: "relu", inputShape: [8]}));
-model.add(tf.layers.dense({units: 175, activation: "relu"}));
-model.add(tf.layers.dense({units: 150, activation: "relu"}));
-model.add(tf.layers.dense({units: NUM_PITCH_CLASSES, activation: "softmax"}));
-
+model.add(tf.layers.dense({units: 250, activation: 'relu', inputShape: [8]}));
+model.add(tf.layers.dense({units: 175, activation: 'relu'}));
+model.add(tf.layers.dense({units: 150, activation: 'relu'}));
+model.add(tf.layers.dense({units: NUM_PITCH_CLASSES, activation: 'softmax'}));
+    
 model.compile({
     optimizer: tf.train.adam(),
-    loss: "sparseCategoricalCrossentropy",
-    metrics: ["accuracy"]
+    loss: 'sparseCategoricalCrossentropy',
+    metrics: ['accuracy']
 });
 
 async function evaluate(useTestData) {
@@ -86,71 +94,73 @@ async function evaluate(useTestData) {
     await trainingValidationData.forEachAsync(pitchTypeBatch => {
         const values = model.predict(pitchTypeBatch.xs).dataSync();
         const classSize = TRAINING_DATA_LENGTH / NUM_PITCH_CLASSES;
-        for (let i=0; i<NUM_PITCH_CLASSES; i++){
+        for (let i = 0; i < NUM_PITCH_CLASSES; i++) {
             results[pitchFromClassNum(i)] = {
                 training: calcPitchClassEval(i, classSize, values)
             };
         }
     });
-    if (useTestData){
+  
+    if (useTestData) {
         await testValidationData.forEachAsync(pitchTypeBatch => {
             const values = model.predict(pitchTypeBatch.xs).dataSync();
             const classSize = TEST_DATA_LENGTH / NUM_PITCH_CLASSES;
-            for (let i=0; i<NUM_PITCH_CLASSES; i++){
-                results[pitchFromClassNum(i)].validation = calcPitchClassEval(i, classSize, values);
+            for (let i = 0; i < NUM_PITCH_CLASSES; i++) {
+                results[pitchFromClassNum(i)].validation =
+                    calcPitchClassEval(i, classSize, values);
             }
         });
     }
     return results;
 }
 
-async function predictSample(sample){
-    let result = model.predict(tf.tensor(sample, [1, sample.length])).arraySync();
+async function predictSample(sample) {
+    let result = model.predict(tf.tensor(sample, [1,sample.length])).arraySync();
     var maxValue = 0;
-    var predictPitch = 7;
-    for (var i=0; i<NUM_PITCH_CLASSES; i++){
-        if (result[0][i] > maxValue){
-            predictPitch = i;
+    var predictedPitch = 7;
+    for (var i = 0; i < NUM_PITCH_CLASSES; i++) {
+        if (result[0][i] > maxValue) {
+            predictedPitch = i;
             maxValue = result[0][i];
         }
     }
-    return pitchFromClassNum(predictPitch);
+    return pitchFromClassNum(predictedPitch);
 }
 
-function calcPitchClassEval(pitchIndex, classSize, values){
+function calcPitchClassEval(pitchIndex, classSize, values) {
     let index = (pitchIndex * classSize * NUM_PITCH_CLASSES) + pitchIndex;
     let total = 0;
-    for (let i=0; i<classSize; i++){
+    for (let i = 0; i < classSize; i++) {
         total += values[index];
         index += NUM_PITCH_CLASSES;
     }
     return total / classSize;
 }
 
-function pitchFromClassNum(classNum){
-    switch (classNum){
+function pitchFromClassNum(classNum) {
+    switch (classNum) {
         case 0:
-            return "Fastball (2-seam)";
+            return 'Fastball (2-seam)';
         case 1:
-            return "Fastball (4-seam)";
+            return 'Fastball (4-seam)';
         case 2:
-            return "Fastball (sinker)";
+            return 'Fastball (sinker)';
         case 3:
-            return "Fastball (cutter)";
+            return 'Fastball (cutter)';
         case 4:
-            return "Slider";
+            return 'Slider';
         case 5:
-            return "Changeup";
+            return 'Changeup';
         case 6:
-            return "Curveball";
+            return 'Curveball';
         default:
-            return "Unknown";
+            return 'Unknown';
     }
 }
 
 module.exports = {
     evaluate,
-    model, 
+    model,
     pitchFromClassNum,
     predictSample,
     testValidationData,
