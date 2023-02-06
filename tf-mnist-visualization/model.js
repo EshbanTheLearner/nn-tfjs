@@ -1,5 +1,4 @@
 import * as tf from "@tensorflow/tfjs";
-import { op } from "@tensorflow/tfjs";
 import { MnistData } from "./data";
 
 export function getModel(){
