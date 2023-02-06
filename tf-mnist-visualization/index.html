@@ -110,74 +110,74 @@
             </p>
         </section>
  
-     <section>
-       <h2>Our Data</h2>
-       <p>
-         We will use the MNIST database as our training set, it is comprised of a set of about 60k images of handwritten
-         digits, all
-         cropped to 28x28 px. Lets take a look at a few examples, we'll use the surface we created earlier.
-       </p>
-       <button id='load-data'>Load Data</button>
-       &nbsp;&nbsp;&nbsp;
-       <button id='show-examples' disabled>Show Example Digits</button>
+        <section>
+          <h2>Our Data</h2>
+          <p>
+            We will use the MNIST database as our training set, it is comprised of a set of about 60k images of handwritten
+            digits, all
+            cropped to 28x28 px. Lets take a look at a few examples, we'll use the surface we created earlier.
+          </p>
+          <button id='load-data'>Load Data</button>
+            &nbsp;&nbsp;&nbsp;
+          <button id='show-examples' disabled>Show Example Digits</button>
  
-       <p>
-         The code to render these examples isn't built into tfjs. But because you have full access to the DOM element
-         for each surface,
-         you can draw whatever you would like into them. This allows easy integration of custom visualizations into the
-         visor.
+          <p>
+            The code to render these examples isn't built into tfjs. But because you have full access to the DOM element
+            for each surface,
+            you can draw whatever you would like into them. This allows easy integration of custom visualizations into the
+            visor.
  
-         <p>
-           Here is the code for the "Show Example Digits" button above:
-         </p>
+            <p>
+              Here is the code for the "Show Example Digits" button above:
+            </p>
  
-         <script class='show-script'>
-           async function showExamples() {
+            <script class='show-script'>
+              async function showExamples() {
  
-             // Get a surface
-             const surface =
-               tfvis.visor().surface({ name: 'My First Surface', tab: 'Input Data' });
-             const drawArea = surface.drawArea;
+                // Get a surface
+                const surface =
+                  tfvis.visor().surface({ name: 'My First Surface', tab: 'Input Data' });
+                const drawArea = surface.drawArea;
  
              // Get the examples
-             const examples = data.nextTestBatch(20);
-             const numExamples = examples.xs.shape[0];
-             for (let i = 0; i < numExamples; i++) {
-               const imageTensor = tf.tidy(() => {
-                 return examples.xs.slice([i, 0], [1, examples.xs.shape[1]]).reshape([
-                   28, 28, 1
-                 ]);
-               });
+                const examples = data.nextTestBatch(20);
+                const numExamples = examples.xs.shape[0];
+                for (let i = 0; i < numExamples; i++) {
+                  const imageTensor = tf.tidy(() => {
+                    return examples.xs.slice([i, 0], [1, examples.xs.shape[1]]).reshape([
+                      28, 28, 1
+                    ]);
+                  });
  
                // Create a canvas element to render each example
-               const canvas = document.createElement('canvas');
-               canvas.width = 28;
-               canvas.height = 28;
-               canvas.style = 'margin: 4px;';
-               await tf.browser.toPixels(imageTensor, canvas);
-               drawArea.appendChild(canvas);
+                  const canvas = document.createElement('canvas');
+                  canvas.width = 28;
+                  canvas.height = 28;
+                  canvas.style = 'margin: 4px;';
+                  await tf.browser.toPixels(imageTensor, canvas);
+                  drawArea.appendChild(canvas);
  
-               imageTensor.dispose();
-             }
-           }
+                  imageTensor.dispose();
+                    }
+              }
  
-           document.querySelector('#show-examples')
-             .addEventListener('click', async (e) => showExamples());
-         </script>
+              document.querySelector('#show-examples')
+                .addEventListener('click', async (e) => showExamples());
+            </script>
  
-     </section>
+        </section>
  
-     <section>
-       <h2>Training Our Model</h2>
-       <p>
+        <section>
+          <h2>Training Our Model</h2>
+          <p>
          Our goal is to train a model to recognize similar digits. We have already written a tutorial on how to do so.
          So in this
          article we are going to focus on monitoring that training and also look at how well our model performs.
-       </p>
+          </p>
  
-       <p>First let us define a helper function to do our training.</p>
+          <p>First let us define a helper function to do our training.</p>
  
-       <script class='show-script'>
+          <script class='show-script'>
          async function train(model, data, fitCallbacks) {
            const BATCH_SIZE = 64;
            const trainDataSize = 500;
@@ -207,110 +207,107 @@
              callbacks: fitCallbacks
            });
          }
-       </script>
+          </script>
  
-       <p>
-         We can use the <code>show.fitCallbacks</code> method to get functions that will plot the loss after every batch
-         and
-         epoch.
-       </p>
+          <p>
+            We can use the <code>show.fitCallbacks</code> method to get functions that will plot the loss after every batch
+            and
+            epoch.
+          </p>
  
-       <button id='start-training-1' disabled>Start Training</button>
+          <button id='start-training-1' disabled>Start Training</button>
  
-       <script class='show-script'>
-         async function watchTraining() {
-           const metrics = ['loss', 'val_loss', 'acc', 'val_acc'];
-           const container = {
-             name: 'show.fitCallbacks', tab: 'Training', styles: { height: '1000px' }
-           };
-           const callbacks = tfvis.show.fitCallbacks(container, metrics);
-           return train(model, data, callbacks);
-         }
+          <script class='show-script'>
+            async function watchTraining() {
+              const metrics = ['loss', 'val_loss', 'acc', 'val_acc'];
+              const container = {
+                name: 'show.fitCallbacks', tab: 'Training', styles: { height: '1000px' }
+              };
+              const callbacks = tfvis.show.fitCallbacks(container, metrics);
+              return train(model, data, callbacks);
+            }
  
-         document.querySelector('#start-training-1')
-           .addEventListener('click', () => watchTraining());
-       </script>
+            document.querySelector('#start-training-1')
+              .addEventListener('click', () => watchTraining());
+          </script>
  
-       <p>
-         Another option is to wait for the training to complete and render the loss curve when it is done.
-       </p>
+          <p>
+            Another option is to wait for the training to complete and render the loss curve when it is done.
+          </p>
  
-       <button id='start-training-2' disabled>Start Training</button>
+          <button id='start-training-2' disabled>Start Training</button>
  
-       <script class='show-script'>
-         async function showTrainingHistory() {
-           const trainingHistory = await train(model, data);
-           tfvis.show.history({ name: 'Training History', tab: 'Training' },
-             trainingHistory, ['loss', 'val_loss', 'acc', 'val_acc']);
-         }
+          <script class='show-script'>
+            async function showTrainingHistory() {
+              const trainingHistory = await train(model, data);
+              tfvis.show.history({ name: 'Training History', tab: 'Training' },
+                trainingHistory, ['loss', 'val_loss', 'acc', 'val_acc']);
+            }
  
-         document.querySelector('#start-training-2')
-           .addEventListener('click', () => showTrainingHistory());
-       </script>
-     </section>
+            document.querySelector('#start-training-2')
+              .addEventListener('click', () => showTrainingHistory());
+          </script>
+        </section>
  
-     <section>
-       <h2>Evaluating Our Model</h2>
-       <p>
-         Now that our model is trained we should evalute its performance. For a classification task like this one we can
-         use the `perClassAccuracy`
-         and `confusionMatrix` functions. These are demonstrated below.
-       </p>
+        <section>
+          <h2>Evaluating Our Model</h2>
+          <p>
+            Now that our model is trained we should evalute its performance. For a classification task like this one we can
+            use the `perClassAccuracy`
+            and `confusionMatrix` functions. These are demonstrated below.
+          </p>
  
-       <p><button id='show-accuracy'>Show per-class accuracy</button></p>
-       <p><button id='show-confusion'>Show confusion matrix</button></p>
+          <p><button id='show-accuracy'>Show per-class accuracy</button></p>
+          <p><button id='show-confusion'>Show confusion matrix</button></p>
  
-       <script class='show-script'>
+          <script class='show-script'>
          {
-           const classNames = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five',
-             'Six', 'Seven', 'Eight', 'Nine'];
+            const classNames = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five',
+              'Six', 'Seven', 'Eight', 'Nine'];
  
-           function doPrediction(testDataSize = 500) {
-             const testData = data.nextTestBatch(testDataSize);
-             const testxs = testData.xs.reshape([testDataSize, 28, 28, 1]);
-             const labels = testData.labels.argMax([-1]);
-             const preds = model.predict(testxs).argMax([-1]);
+            function doPrediction(testDataSize = 500) {
+              const testData = data.nextTestBatch(testDataSize);
+              const testxs = testData.xs.reshape([testDataSize, 28, 28, 1]);
+              const labels = testData.labels.argMax([-1]);
+              const preds = model.predict(testxs).argMax([-1]);
  
-             testxs.dispose();
-             return [preds, labels];
-           }
+              testxs.dispose();
+              return [preds, labels];
+            }
  
-           async function showAccuracy() {
-             const [preds, labels] = doPrediction();
-             const classAccuracy = await tfvis.metrics.perClassAccuracy(labels, preds);
-             const container = { name: 'Accuracy', tab: 'Evaluation' };
-             tfvis.show.perClassAccuracy(container, classAccuracy, classNames);
+            async function showAccuracy() {
+              const [preds, labels] = doPrediction();
+              const classAccuracy = await tfvis.metrics.perClassAccuracy(labels, preds);
+              const container = { name: 'Accuracy', tab: 'Evaluation' };
+              tfvis.show.perClassAccuracy(container, classAccuracy, classNames);
  
-             labels.dispose();
-           }
+              labels.dispose();
+            }
  
-           async function showConfusion() {
-             const [preds, labels] = doPrediction();
-             const confusionMatrix = await tfvis.metrics.confusionMatrix(labels, preds);
-             const container = { name: 'Confusion Matrix', tab: 'Evaluation' };
-             tfvis.render.confusionMatrix(container, {
-               values: confusionMatrix,
-               tickLabels: classNames,
-             });
+            async function showConfusion() {
+              const [preds, labels] = doPrediction();
+              const confusionMatrix = await tfvis.metrics.confusionMatrix(labels, preds);
+              const container = { name: 'Confusion Matrix', tab: 'Evaluation' };
+              tfvis.render.confusionMatrix(container, {
+                values: confusionMatrix,
+                tickLabels: classNames,
+              });
  
-             labels.dispose();
-           }
+              labels.dispose();
+            }
  
-           document.querySelector('#show-accuracy')
-             .addEventListener('click', () => showAccuracy());
+            document.querySelector('#show-accuracy')
+              .addEventListener('click', () => showAccuracy());
  
-           document.querySelector('#show-confusion')
-             .addEventListener('click', () => showConfusion());
-         }
+            document.querySelector('#show-confusion')
+              .addEventListener('click', () => showConfusion());
+          }
        </script>
  
  
         </section>
  
     </article>
- 
- 
- 
  
 </body>
  
